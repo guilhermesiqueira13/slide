@@ -1,24 +1,30 @@
 body {
   margin: 0px;
 }
+
 ul {
   padding: 0px;
   margin: 0px;
   list-style: none;
 }
+
 img {
   display: block;
   max-width: 100%;
 }
+
 .slide-wrap {
   overflow: hidden;
 }
+
 .slide {
   display: flex;
 }
+
 .slide:hover {
   will-change: transform;
 }
+
 .slide li {
   flex-shrink: 0;
   width: 80vw;
@@ -31,7 +37,31 @@ img {
   transform: scale(0.7);
   transition: 0.4s;
 }
+
 .slide li.active {
   opacity: 1;
   transform: scale(1);
+}
+
+[data-control="slide"] {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+[data-control="slide"] li a {
+  display: block;
+  width: 12px;
+  height: 12px;
+  background-color: #fb5;
+  border-radius: 50%;
+  overflow: hidden;
+  text-indent: -999px;
+  margin: 5px;
+}
+
+/* Agora o seletor aplica a cor ativa ao <a> contido no <li> com classe "active" */
+[data-control="slide"] li.active a,
+[data-control="slide"] li a:hover {
+  background-color: #e54;
 }
