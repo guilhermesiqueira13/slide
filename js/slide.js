@@ -1,4 +1,5 @@
 import debounce from "./debounce.js";
+
 export default class Slide {
   constructor(slide, wrap) {
     this.slide = document.querySelector(slide);
@@ -6,6 +7,7 @@ export default class Slide {
     this.dist = { finalPosition: 0, startX: 0, movement: 0 };
     this.index = { prev: null, active: 0, next: null };
     this.activeClass = "active";
+    this.changeEvent = new Event("changeEvent");
   }
 
   transition(active) {
@@ -13,7 +15,7 @@ export default class Slide {
   }
 
   moveSlide(distX) {
-    this.dist.movePosition = distX; // Fixed typo
+    this.dist.movePosition = distX; // Salva a posição
     this.slide.style.transform = `translate3d(${distX}px, 0, 0)`;
   }
 
@@ -98,6 +100,7 @@ export default class Slide {
     this.slidesIndexNav(index);
     this.dist.finalPosition = activeSlide.position;
     this.changeActiveClass();
+    this.wrap.dispatchEvent(this.changeEvent);
   }
 
   changeActiveClass() {
@@ -126,7 +129,7 @@ export default class Slide {
     }, 1000);
   }
 
-  addRisizeEvent() {
+  addResizeEvent() {
     window.addEventListener("resize", this.onResize);
   }
 
@@ -134,7 +137,8 @@ export default class Slide {
     this.onStart = this.onStart.bind(this);
     this.onMove = this.onMove.bind(this);
     this.onEnd = this.onEnd.bind(this);
-    this.onResize = debounce(this.onResize(this), 200);
+    // Corrigindo o debounce para passar a referência da função
+    this.onResize = debounce(this.onResize.bind(this), 200);
     this.activePrevSlide = this.activePrevSlide.bind(this);
     this.activeNextSlide = this.activeNextSlide.bind(this);
   }
@@ -144,13 +148,18 @@ export default class Slide {
     this.transition(true);
     this.addSlideEvents();
     this.slideConfig();
-    this.addRisizeEvent();
+    this.addResizeEvent();
     this.changeSlide(0);
     return this;
   }
 }
 
 export class SlideNav extends Slide {
+  constructor(slide, wrap) {
+    super(slide, wrap);
+    this.bindControlEvents();
+  }
+
   addArrow(prev, next) {
     this.prevElement = document.querySelector(prev);
     this.nextElement = document.querySelector(next);
@@ -160,5 +169,51 @@ export class SlideNav extends Slide {
   addArrowEvent() {
     this.prevElement.addEventListener("click", this.activePrevSlide);
     this.nextElement.addEventListener("click", this.activeNextSlide);
+  }
+
+  createControl() {
+    const control = document.createElement("ul");
+    control.dataset.control = "slide";
+    this.slideArray.forEach((item, index) => {
+      control.innerHTML += `<li><a href="#slide${index + 1}">${
+        index + 1
+      }</a></li>`;
+    });
+    this.wrap.appendChild(control);
+    return control;
+  }
+
+  // Adiciona o clique em cada bolinha e utiliza o índice correto
+  eventControl(item, index) {
+    item.addEventListener("click", (event) => {
+      event.preventDefault();
+      this.changeSlide(index);
+    });
+  }
+
+  activeControlItem() {
+    this.controlArray.forEach((item) =>
+      item.classList.remove(this.activeClass)
+    );
+    this.controlArray[this.index.active].classList.add(this.activeClass);
+  }
+
+  addControl(customControl) {
+    // Se não passar um seletor customizado, cria o controle automaticamente
+    this.control =
+      document.querySelector(customControl) || this.createControl();
+    this.controlArray = [...this.control.children];
+
+    // Adiciona o event listener para cada bolinha
+    this.controlArray.forEach((item, index) => this.eventControl(item, index));
+    // Adiciona apenas UM listener para responder ao "changeEvent"
+    this.wrap.addEventListener("changeEvent", this.activeControlItem);
+    // Aplica a classe ativa inicial
+    this.activeControlItem();
+  }
+
+  bindControlEvents() {
+    this.eventControl = this.eventControl.bind(this);
+    this.activeControlItem = this.activeControlItem.bind(this);
   }
 }
